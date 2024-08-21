@@ -1,7 +1,7 @@
 ---
 title: "DiSC: A statistical tool for differential expression analyis of individual level single-cell RNA-Seq data"
 author: "Lujun Zhang and Jun Chen"
-date: "2024-01-03"
+date: "2024-07-31"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{DiSC: A statistical tool for differential expression analyis of individual level single-cell RNA-Seq data}
@@ -32,7 +32,6 @@ This vigenette will showcase how to use DiSC.
 
 ```{r setup, warning = FALSE, message=FALSE}
 library(DiSC)
-require(GUniFrac)
 ```
 
 # 2. Data Input
@@ -56,46 +55,31 @@ head(meta_ind)
 
 # 3. DiSC: A statistical tool for differential expression analyis of individual level single-cell RNA-seq data
 
-DiSC currently relies on rarefaction to adjust for different sequencing depths in each cell. The sequencing depth of each cell will be rarefied to the minimal value across all cells. In cases where the sample size is large, some cells may have very shallow sequencing depths. In such instances, it is advisable to discard the several lowest-sequenced samples. Our supplementary analyses showed that DiSC is generally robust to rarefaction when discarding the least 0%-10% sequenced cells.
-
-```{r rarefaction}
-read_depth = rowSums(count_matrix)
-discarding_flag = FALSE
-if(discarding_flag){
-  # when the sequencing depths of some samples are shallow
-  depth = min(5000, round(quantile(read_depth, probs = 0.1)))
-  cat("read depth filtering with threshold", depth, "\n")
-  count_matrix_temp <- count_matrix[, which(read_depth >= depth)]
-  meta_cell_temp <- meta_cell %>% 
-    filter(cell_id %in% colnames(count_matrix_temp))
-  rarefy_mat <- t(GUniFrac::Rarefy(t(count_matrix_temp))$otu.tab.rff)
-} else {
-  # when all samples are sufficiently sequenced
-  rarefy_mat <- t(GUniFrac::Rarefy(t(count_matrix))$otu.tab.rff)
-}
-
-```
-
 List of accepted parameters in function `DiSC`:
 
--  `ct.mat`: sequencing **count** matrix. Genes are in rows, **column names are cell ids**.
+-  `data.mat`: **count** matrix for single cell RNA sequencing data, or other single cell data matrices. Genes / variables are in rows, **column names are cell ids** and row names are gene / variable names.
 -  `cell.ind`: a data frame includes two columns of cell ids and individual ids. It links cell ids to individual ids.
 -  `metadata`: a data frame includes a column of individual id, a column of an outcome of interest and columns of covariates if applicable.
 -  `outcome`: a character string which is the variable name of outcome in `metadata`.
 -  `covariates`: a character string or vector of character strings which are the variable names of covariates in `metadata`. Default: `NULL`.
--  `stats.combine.func`: a function, method to combine F-statistics using different features, default `max`.
 -  `cell.id`: a character string which is the variable name of cell ids in `cell.ind`.
 -  `individual.id`: a character string which is the variable name of the individual id variables in `cell.ind` and `metadata`.
 -  `perm.no`: an integer, number of permutations used. Default: 999. Can be reduced to 99 if adjusted P-values (false discovery rate) is of the only interest.
--  `features`: Vector of a character string. Choose from "prev" (zero/non-zero proportions), "nzm" (non-zero mean), "nzsd" (non-zero standard deviation), "mean" (overall mean), "sd" (overall standard deviation). Features used to test for the differentially expressed genes. Default: "prev", "nzm" and "nzsd".
+-  `features`: Vector of a character string. Choose from "prev" (zero/non-zero proportions), "nzm" (mean), "nzsd" (non-zero standard deviation), "sd" (overall standard deviation). Features used to test for the differentially expressed genes. Default: "prev", "nzm" and "nzsd".
 -  `verbose`: Logical. Should the function print the processes? Default: `TRUE`.
+-  `sequencing.data`: Logical. Is the data.mat a sequencing data matrix (e.g. scRNA sequencing data/count data)? Default: `TRUE`.
 
 ```{r}
-obj1 <- DiSC(ct.mat = rarefy_mat, cell.ind = meta_cell,
+set.seed(seed = 123456)
+t <- proc.time()
+obj1 <- DiSC(data.mat = count_matrix, cell.ind = meta_cell,
              metadata = meta_ind, outcome = "phenotype",
              covariates = "RIN", cell.id = "cell_id",
              individual.id = "individual", perm.no = 999,
-             features = c('prev', 'nzm', 'nzsd'), verbose = TRUE)
+             features = c('prev', 'nzm', 'nzsd'), verbose = TRUE,
+             sequencing.data = TRUE)
+print("Computational time for DiSC:")
+print(proc.time() - t)
 # Type I error
 mean(obj1$p.raw[gene_index$EE_index] <= 0.05)
 # Power
@@ -106,19 +90,6 @@ mean(obj1$p.raw[gene_index$mean_var_index] <= 0.05)
 sum(obj1$p.adj.fdr[gene_index$EE_index] <= 0.10)/
   sum(obj1$p.adj.fdr <= 0.10)
 # Number of positive discoveries
-sum(obj1$p.adj.fdr[gene_index$mean_index] <= 0.10)
-sum(obj1$p.adj.fdr[gene_index$var_index] <= 0.10)
-sum(obj1$p.adj.fdr[gene_index$mean_var_index] <= 0.10)
-
-t <- proc.time()
-obj2 <- DiSC(ct.mat = rarefy_mat, cell.ind = meta_cell,
-             metadata = meta_ind, outcome = "phenotype",
-             covariates = "RIN", cell.id = "cell_id",
-             individual.id = "individual", perm.no = 99,
-             features = c('prev', 'nzm', 'nzsd'), verbose = FALSE)
-print(t - proc.time())
-obj1$p.adj.fdr[123]
-obj2$p.adj.fdr[123]
 sum(obj1$p.adj.fdr[gene_index$mean_index] <= 0.10)
 sum(obj1$p.adj.fdr[gene_index$var_index] <= 0.10)
 sum(obj1$p.adj.fdr[gene_index$mean_var_index] <= 0.10)

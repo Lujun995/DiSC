@@ -12,7 +12,7 @@
 
 <meta name="author" content="Lujun Zhang and Jun Chen" />
 
-<meta name="date" content="2024-01-03" />
+<meta name="date" content="2024-07-31" />
 
 <title>DiSC: A statistical tool for differential expression analyis of individual level single-cell RNA-Seq data</title>
 
@@ -341,7 +341,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">DiSC: A statistical tool for differential
 expression analyis of individual level single-cell RNA-Seq data</h1>
 <h4 class="author">Lujun Zhang and Jun Chen</h4>
-<h4 class="date">2024-01-03</h4>
+<h4 class="date">2024-07-31</h4>
 
 
 
@@ -373,8 +373,7 @@ and variance</li>
 </ul></li>
 <li>Difference in mean and/or variance = 1.3 folder change</li>
 </ul>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(DiSC)</span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">require</span>(GUniFrac)</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(DiSC)</span></code></pre></div>
 </div>
 </div>
 <div id="data-input" class="section level1">
@@ -417,32 +416,12 @@ and variance</li>
 <div id="disc-a-statistical-tool-for-differential-expression-analyis-of-individual-level-single-cell-rna-seq-data" class="section level1">
 <h1>3. DiSC: A statistical tool for differential expression analyis of
 individual level single-cell RNA-seq data</h1>
-<p>DiSC currently relies on rarefaction to adjust for different
-sequencing depths in each cell. The sequencing depth of each cell will
-be rarefied to the minimal value across all cells. In cases where the
-sample size is large, some cells may have very shallow sequencing
-depths. In such instances, it is advisable to discard the several
-lowest-sequenced samples. Our supplementary analyses showed that DiSC is
-generally robust to rarefaction when discarding the least 0%-10%
-sequenced cells.</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>read_depth <span class="ot">=</span> <span class="fu">rowSums</span>(count_matrix)</span>
-<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>discarding_flag <span class="ot">=</span> <span class="cn">FALSE</span></span>
-<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a><span class="cf">if</span>(discarding_flag){</span>
-<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>  <span class="co"># when the sequencing depths of some samples are shallow</span></span>
-<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>  depth <span class="ot">=</span> <span class="fu">min</span>(<span class="dv">5000</span>, <span class="fu">round</span>(<span class="fu">quantile</span>(read_depth, <span class="at">probs =</span> <span class="fl">0.1</span>)))</span>
-<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;read depth filtering with threshold&quot;</span>, depth, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>  count_matrix_temp <span class="ot">&lt;-</span> count_matrix[, <span class="fu">which</span>(read_depth <span class="sc">&gt;=</span> depth)]</span>
-<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a>  meta_cell_temp <span class="ot">&lt;-</span> meta_cell <span class="sc">%&gt;%</span> </span>
-<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a>    <span class="fu">filter</span>(cell_id <span class="sc">%in%</span> <span class="fu">colnames</span>(count_matrix_temp))</span>
-<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a>  rarefy_mat <span class="ot">&lt;-</span> <span class="fu">t</span>(GUniFrac<span class="sc">::</span><span class="fu">Rarefy</span>(<span class="fu">t</span>(count_matrix_temp))<span class="sc">$</span>otu.tab.rff)</span>
-<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a>} <span class="cf">else</span> {</span>
-<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a>  <span class="co"># when all samples are sufficiently sequenced</span></span>
-<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a>  rarefy_mat <span class="ot">&lt;-</span> <span class="fu">t</span>(GUniFrac<span class="sc">::</span><span class="fu">Rarefy</span>(<span class="fu">t</span>(count_matrix))<span class="sc">$</span>otu.tab.rff)</span>
-<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a>}</span></code></pre></div>
 <p>List of accepted parameters in function <code>DiSC</code>:</p>
 <ul>
-<li><code>ct.mat</code>: sequencing <strong>count</strong> matrix. Genes
-are in rows, <strong>column names are cell ids</strong>.</li>
+<li><code>data.mat</code>: <strong>count</strong> matrix for single cell
+RNA sequencing data, or other single cell data matrices. Genes /
+variables are in rows, <strong>column names are cell ids</strong> and
+row names are gene / variable names.</li>
 <li><code>cell.ind</code>: a data frame includes two columns of cell ids
 and individual ids. It links cell ids to individual ids.</li>
 <li><code>metadata</code>: a data frame includes a column of individual
@@ -453,8 +432,6 @@ of outcome in <code>metadata</code>.</li>
 <li><code>covariates</code>: a character string or vector of character
 strings which are the variable names of covariates in
 <code>metadata</code>. Default: <code>NULL</code>.</li>
-<li><code>stats.combine.func</code>: a function, method to combine
-F-statistics using different features, default <code>max</code>.</li>
 <li><code>cell.id</code>: a character string which is the variable name
 of cell ids in <code>cell.ind</code>.</li>
 <li><code>individual.id</code>: a character string which is the variable
@@ -464,65 +441,54 @@ name of the individual id variables in <code>cell.ind</code> and
 Default: 999. Can be reduced to 99 if adjusted P-values (false discovery
 rate) is of the only interest.</li>
 <li><code>features</code>: Vector of a character string. Choose from
-“prev” (zero/non-zero proportions), “nzm” (non-zero mean), “nzsd”
-(non-zero standard deviation), “mean” (overall mean), “sd” (overall
-standard deviation). Features used to test for the differentially
-expressed genes. Default: “prev”, “nzm” and “nzsd”.</li>
+“prev” (zero/non-zero proportions), “nzm” (mean), “nzsd” (non-zero
+standard deviation), “sd” (overall standard deviation). Features used to
+test for the differentially expressed genes. Default: “prev”, “nzm” and
+“nzsd”.</li>
 <li><code>verbose</code>: Logical. Should the function print the
 processes? Default: <code>TRUE</code>.</li>
+<li><code>sequencing.data</code>: Logical. Is the data.mat a sequencing
+data matrix (e.g. scRNA sequencing data/count data)? Default:
+<code>TRUE</code>.</li>
 </ul>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>obj1 <span class="ot">&lt;-</span> <span class="fu">DiSC</span>(<span class="at">ct.mat =</span> rarefy_mat, <span class="at">cell.ind =</span> meta_cell,</span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>             <span class="at">metadata =</span> meta_ind, <span class="at">outcome =</span> <span class="st">&quot;phenotype&quot;</span>,</span>
-<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>             <span class="at">covariates =</span> <span class="st">&quot;RIN&quot;</span>, <span class="at">cell.id =</span> <span class="st">&quot;cell_id&quot;</span>,</span>
-<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>             <span class="at">individual.id =</span> <span class="st">&quot;individual&quot;</span>, <span class="at">perm.no =</span> <span class="dv">999</span>,</span>
-<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>             <span class="at">features =</span> <span class="fu">c</span>(<span class="st">&#39;prev&#39;</span>, <span class="st">&#39;nzm&#39;</span>, <span class="st">&#39;nzsd&#39;</span>), <span class="at">verbose =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="at">seed =</span> <span class="dv">123456</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>t <span class="ot">&lt;-</span> <span class="fu">proc.time</span>()</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>obj1 <span class="ot">&lt;-</span> <span class="fu">DiSC</span>(<span class="at">data.mat =</span> count_matrix, <span class="at">cell.ind =</span> meta_cell,</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>             <span class="at">metadata =</span> meta_ind, <span class="at">outcome =</span> <span class="st">&quot;phenotype&quot;</span>,</span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>             <span class="at">covariates =</span> <span class="st">&quot;RIN&quot;</span>, <span class="at">cell.id =</span> <span class="st">&quot;cell_id&quot;</span>,</span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>             <span class="at">individual.id =</span> <span class="st">&quot;individual&quot;</span>, <span class="at">perm.no =</span> <span class="dv">999</span>,</span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>             <span class="at">features =</span> <span class="fu">c</span>(<span class="st">&#39;prev&#39;</span>, <span class="st">&#39;nzm&#39;</span>, <span class="st">&#39;nzsd&#39;</span>), <span class="at">verbose =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a>             <span class="at">sequencing.data =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <pre><code>## The data has  24  samples and  8000  genes will be tested!
 ## Permutation testing ...
 ## ...................................................................................................
 ## *Completed!</code></pre>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="co"># Type I error</span></span>
-<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a><span class="fu">mean</span>(obj1<span class="sc">$</span>p.raw[gene_index<span class="sc">$</span>EE_index] <span class="sc">&lt;=</span> <span class="fl">0.05</span>)</span></code></pre></div>
-<pre><code>## [1] 0.03455882</code></pre>
-<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="co"># Power</span></span>
-<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a><span class="fu">mean</span>(obj1<span class="sc">$</span>p.raw[gene_index<span class="sc">$</span>mean_index] <span class="sc">&lt;=</span> <span class="fl">0.05</span>)</span></code></pre></div>
-<pre><code>## [1] 0.5375</code></pre>
-<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="fu">mean</span>(obj1<span class="sc">$</span>p.raw[gene_index<span class="sc">$</span>var_index] <span class="sc">&lt;=</span> <span class="fl">0.05</span>)</span></code></pre></div>
-<pre><code>## [1] 0.7625</code></pre>
-<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a><span class="fu">mean</span>(obj1<span class="sc">$</span>p.raw[gene_index<span class="sc">$</span>mean_var_index] <span class="sc">&lt;=</span> <span class="fl">0.05</span>)</span></code></pre></div>
-<pre><code>## [1] 0.9025</code></pre>
-<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a><span class="co"># False discovery proportion</span></span>
-<span id="cb25-2"><a href="#cb25-2" tabindex="-1"></a><span class="fu">sum</span>(obj1<span class="sc">$</span>p.adj.fdr[gene_index<span class="sc">$</span>EE_index] <span class="sc">&lt;=</span> <span class="fl">0.10</span>)<span class="sc">/</span></span>
-<span id="cb25-3"><a href="#cb25-3" tabindex="-1"></a>  <span class="fu">sum</span>(obj1<span class="sc">$</span>p.adj.fdr <span class="sc">&lt;=</span> <span class="fl">0.10</span>)</span></code></pre></div>
-<pre><code>## [1] 0.05714286</code></pre>
-<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" tabindex="-1"></a><span class="co"># Number of positive discoveries</span></span>
-<span id="cb27-2"><a href="#cb27-2" tabindex="-1"></a><span class="fu">sum</span>(obj1<span class="sc">$</span>p.adj.fdr[gene_index<span class="sc">$</span>mean_index] <span class="sc">&lt;=</span> <span class="fl">0.10</span>)</span></code></pre></div>
-<pre><code>## [1] 125</code></pre>
-<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" tabindex="-1"></a><span class="fu">sum</span>(obj1<span class="sc">$</span>p.adj.fdr[gene_index<span class="sc">$</span>var_index] <span class="sc">&lt;=</span> <span class="fl">0.10</span>)</span></code></pre></div>
-<pre><code>## [1] 212</code></pre>
-<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" tabindex="-1"></a><span class="fu">sum</span>(obj1<span class="sc">$</span>p.adj.fdr[gene_index<span class="sc">$</span>mean_var_index] <span class="sc">&lt;=</span> <span class="fl">0.10</span>)</span></code></pre></div>
-<pre><code>## [1] 323</code></pre>
-<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" tabindex="-1"></a>t <span class="ot">&lt;-</span> <span class="fu">proc.time</span>()</span>
-<span id="cb33-2"><a href="#cb33-2" tabindex="-1"></a>obj2 <span class="ot">&lt;-</span> <span class="fu">DiSC</span>(<span class="at">ct.mat =</span> rarefy_mat, <span class="at">cell.ind =</span> meta_cell,</span>
-<span id="cb33-3"><a href="#cb33-3" tabindex="-1"></a>             <span class="at">metadata =</span> meta_ind, <span class="at">outcome =</span> <span class="st">&quot;phenotype&quot;</span>,</span>
-<span id="cb33-4"><a href="#cb33-4" tabindex="-1"></a>             <span class="at">covariates =</span> <span class="st">&quot;RIN&quot;</span>, <span class="at">cell.id =</span> <span class="st">&quot;cell_id&quot;</span>,</span>
-<span id="cb33-5"><a href="#cb33-5" tabindex="-1"></a>             <span class="at">individual.id =</span> <span class="st">&quot;individual&quot;</span>, <span class="at">perm.no =</span> <span class="dv">99</span>,</span>
-<span id="cb33-6"><a href="#cb33-6" tabindex="-1"></a>             <span class="at">features =</span> <span class="fu">c</span>(<span class="st">&#39;prev&#39;</span>, <span class="st">&#39;nzm&#39;</span>, <span class="st">&#39;nzsd&#39;</span>), <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
-<pre><code>## *</code></pre>
-<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" tabindex="-1"></a><span class="fu">print</span>(t <span class="sc">-</span> <span class="fu">proc.time</span>())</span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="fu">print</span>(<span class="st">&quot;Computational time for DiSC:&quot;</span>)</span></code></pre></div>
+<pre><code>## [1] &quot;Computational time for DiSC:&quot;</code></pre>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">proc.time</span>() <span class="sc">-</span> t)</span></code></pre></div>
 <pre><code>##    user  system elapsed 
-##   -9.52   -1.73  -19.93</code></pre>
-<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" tabindex="-1"></a>obj1<span class="sc">$</span>p.adj.fdr[<span class="dv">123</span>]</span></code></pre></div>
-<pre><code>##   gene123 
-## 0.8862973</code></pre>
-<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" tabindex="-1"></a>obj2<span class="sc">$</span>p.adj.fdr[<span class="dv">123</span>]</span></code></pre></div>
-<pre><code>##   gene123 
-## 0.8801008</code></pre>
-<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" tabindex="-1"></a><span class="fu">sum</span>(obj1<span class="sc">$</span>p.adj.fdr[gene_index<span class="sc">$</span>mean_index] <span class="sc">&lt;=</span> <span class="fl">0.10</span>)</span></code></pre></div>
-<pre><code>## [1] 125</code></pre>
-<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" tabindex="-1"></a><span class="fu">sum</span>(obj1<span class="sc">$</span>p.adj.fdr[gene_index<span class="sc">$</span>var_index] <span class="sc">&lt;=</span> <span class="fl">0.10</span>)</span></code></pre></div>
-<pre><code>## [1] 212</code></pre>
-<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" tabindex="-1"></a><span class="fu">sum</span>(obj1<span class="sc">$</span>p.adj.fdr[gene_index<span class="sc">$</span>mean_var_index] <span class="sc">&lt;=</span> <span class="fl">0.10</span>)</span></code></pre></div>
-<pre><code>## [1] 323</code></pre>
+##   16.71    1.63   27.14</code></pre>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="co"># Type I error</span></span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a><span class="fu">mean</span>(obj1<span class="sc">$</span>p.raw[gene_index<span class="sc">$</span>EE_index] <span class="sc">&lt;=</span> <span class="fl">0.05</span>)</span></code></pre></div>
+<pre><code>## [1] 0.04764706</code></pre>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="co"># Power</span></span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a><span class="fu">mean</span>(obj1<span class="sc">$</span>p.raw[gene_index<span class="sc">$</span>mean_index] <span class="sc">&lt;=</span> <span class="fl">0.05</span>)</span></code></pre></div>
+<pre><code>## [1] 0.5875</code></pre>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a><span class="fu">mean</span>(obj1<span class="sc">$</span>p.raw[gene_index<span class="sc">$</span>var_index] <span class="sc">&lt;=</span> <span class="fl">0.05</span>)</span></code></pre></div>
+<pre><code>## [1] 0.8175</code></pre>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a><span class="fu">mean</span>(obj1<span class="sc">$</span>p.raw[gene_index<span class="sc">$</span>mean_var_index] <span class="sc">&lt;=</span> <span class="fl">0.05</span>)</span></code></pre></div>
+<pre><code>## [1] 0.9225</code></pre>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" tabindex="-1"></a><span class="co"># False discovery proportion</span></span>
+<span id="cb28-2"><a href="#cb28-2" tabindex="-1"></a><span class="fu">sum</span>(obj1<span class="sc">$</span>p.adj.fdr[gene_index<span class="sc">$</span>EE_index] <span class="sc">&lt;=</span> <span class="fl">0.10</span>)<span class="sc">/</span></span>
+<span id="cb28-3"><a href="#cb28-3" tabindex="-1"></a>  <span class="fu">sum</span>(obj1<span class="sc">$</span>p.adj.fdr <span class="sc">&lt;=</span> <span class="fl">0.10</span>)</span></code></pre></div>
+<pre><code>## [1] 0.07971014</code></pre>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" tabindex="-1"></a><span class="co"># Number of positive discoveries</span></span>
+<span id="cb30-2"><a href="#cb30-2" tabindex="-1"></a><span class="fu">sum</span>(obj1<span class="sc">$</span>p.adj.fdr[gene_index<span class="sc">$</span>mean_index] <span class="sc">&lt;=</span> <span class="fl">0.10</span>)</span></code></pre></div>
+<pre><code>## [1] 158</code></pre>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" tabindex="-1"></a><span class="fu">sum</span>(obj1<span class="sc">$</span>p.adj.fdr[gene_index<span class="sc">$</span>var_index] <span class="sc">&lt;=</span> <span class="fl">0.10</span>)</span></code></pre></div>
+<pre><code>## [1] 266</code></pre>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" tabindex="-1"></a><span class="fu">sum</span>(obj1<span class="sc">$</span>p.adj.fdr[gene_index<span class="sc">$</span>mean_var_index] <span class="sc">&lt;=</span> <span class="fl">0.10</span>)</span></code></pre></div>
+<pre><code>## [1] 338</code></pre>
 </div>
 
 

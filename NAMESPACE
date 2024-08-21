@@ -1,7 +1,6 @@
 import(stats)
 import(Matrix)
 import(matrixStats)
-import(vegan)
 
 importFrom(utils, getFromNamespace)
 

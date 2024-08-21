@@ -8,15 +8,16 @@ DiSC: A statistical tool for differential expression analyis of individual level
 A statistical tool for differential expression analyis of individual level single-cell RNA-Seq data
 }
 \usage{
-DiSC(ct.mat, cell.ind, metadata, outcome, covariates = NULL,
-     stats.combine.func = max, cell.id = "cell_id",
+DiSC(data.mat, cell.ind, metadata, outcome, covariates = NULL,
+     cell.id = "cell_id",
      individual.id = "individual", perm.no = 999,
-     features = c('prev', 'nzm', 'nzsd'), verbose = TRUE, ...)
+     features = c('prev', 'nzm', 'nzsd'), verbose = TRUE,
+     sequencing.data = TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{ct.mat}{
-Sequencing count matrix. Genes are in rows, column names should be cell ids.
+  \item{data.mat}{
+**Count** matrix for single cell RNA sequencing data, or other single cell data matrices. Genes / variables are in rows, **column names are cell ids** and row names are gene / variable names.
 }
   \item{cell.ind}{
 A data frame includes two columns of cell ids and individual ids. It links cell ids to individual ids.
@@ -30,8 +31,6 @@ A character string which is the variable name of outcome in \code{metadata}.
   \item{covariates}{
 A character string or vector of character strings which are the variable names of covariates in \code{metadata}. Default: \code{NULL}.
 }
-  \item{stats.combine.func}{
-A function defines the method to combine F-statistics using different features, default \code{max}.}
   \item{cell.id}{
 A character string which is the variable name of cell ids in \code{cell.ind}.}
   \item{individual.id}{
@@ -39,11 +38,11 @@ A character string which is the variable name of the individual id variables in 
   \item{perm.no}{
 An integer, number of permutations used. Default: \code{999}. It can be reduced to \code{99} if adjusted P-values (false discovery rate) are the only interest.}
   \item{features}{
-Vector of a character string. Features used to test for the differentially expressed genes. Choose from \code{"prev"} (zero/non-zero proportions), \code{"nzm"} (non-zero mean), \code{"nzsd"} (non-zero standard deviation), \code{"sd"} (overall standard deviation). Default: \code{"prev"}, \code{"nzm"} and \code{"nzsd"}.}
+Vector of a character string. Features used to test for the differentially expressed genes. Choose from \code{"prev"} (zero/non-zero proportions), \code{"nzm"} (mean), \code{"nzsd"} (non-zero standard deviation), \code{"sd"} (overall standard deviation). Default: \code{"prev"}, \code{"nzm"} and \code{"nzsd"}.}
   \item{verbose}{
 Logical. Should the function print the processes? Default: \code{TRUE}.}
-  \item{...}{
-Other arguments passed to function \code{basic.func}.}
+  \item{sequencing.data}{
+Logical. Is the data.mat a sequencing data matrix (e.g. scRNA sequencing data/count data)? Default: \code{TRUE}.}
 }
 \details{
 %%  ~~ If necessary, more details than the description above ~~
@@ -74,7 +73,6 @@ Jun Chen <\email{chen.jun2@mayo.edu}> and Lujun Zhang
 
 \seealso{
 %% ~~objects to See Also as \code{\link{help}}, ~~~
-\code{\link[GUniFrac]{Rarefy}}
 }
 \examples{
 \dontrun{
@@ -86,13 +84,12 @@ meta_cell <- sim_data$meta_cell
 gene_index <- sim_data$gene_index
 meta_ind <- sim_data$meta_ind
 
-rarefy_mat <- t(GUniFrac::Rarefy(t(count_matrix))$otu.tab.rff)
-
-obj1 <- DiSC(ct.mat = rarefy_mat, cell.ind = meta_cell,
+obj1 <- DiSC(data.mat = count_matrix, cell.ind = meta_cell,
              metadata = meta_ind, outcome = "phenotype",
              covariates = "RIN", cell.id = "cell_id",
              individual.id = "individual", perm.no = 999,
-             features = c('prev', 'nzm', 'nzsd'))
+             features = c('prev', 'nzm', 'nzsd'), verbose = TRUE,
+             sequencing.data = TRUE)
 # Type I error
 mean(obj1$p.raw[gene_index$EE_index] <= 0.05)
 # Power

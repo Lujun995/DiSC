@@ -1,6 +1,5 @@
 ## ----setup, warning = FALSE, message=FALSE------------------------------------
 library(DiSC)
-require(GUniFrac)
 
 ## ----input--------------------------------------------------------------------
 data("sim_data", package = "DiSC")
@@ -17,29 +16,17 @@ count_matrix[1:3,1:6]
 head(meta_cell)
 head(meta_ind)
 
-## ----rarefaction--------------------------------------------------------------
-read_depth = rowSums(count_matrix)
-discarding_flag = FALSE
-if(discarding_flag){
-  # when the sequencing depths of some samples are shallow
-  depth = min(5000, round(quantile(read_depth, probs = 0.1)))
-  cat("read depth filtering with threshold", depth, "\n")
-  count_matrix_temp <- count_matrix[, which(read_depth >= depth)]
-  meta_cell_temp <- meta_cell %>% 
-    filter(cell_id %in% colnames(count_matrix_temp))
-  rarefy_mat <- t(GUniFrac::Rarefy(t(count_matrix_temp))$otu.tab.rff)
-} else {
-  # when all samples are sufficiently sequenced
-  rarefy_mat <- t(GUniFrac::Rarefy(t(count_matrix))$otu.tab.rff)
-}
-
-
 ## -----------------------------------------------------------------------------
-obj1 <- DiSC(ct.mat = rarefy_mat, cell.ind = meta_cell,
+set.seed(seed = 123456)
+t <- proc.time()
+obj1 <- DiSC(data.mat = count_matrix, cell.ind = meta_cell,
              metadata = meta_ind, outcome = "phenotype",
              covariates = "RIN", cell.id = "cell_id",
              individual.id = "individual", perm.no = 999,
-             features = c('prev', 'nzm', 'nzsd'), verbose = TRUE)
+             features = c('prev', 'nzm', 'nzsd'), verbose = TRUE,
+             sequencing.data = TRUE)
+print("Computational time for DiSC:")
+print(proc.time() - t)
 # Type I error
 mean(obj1$p.raw[gene_index$EE_index] <= 0.05)
 # Power
@@ -50,19 +37,6 @@ mean(obj1$p.raw[gene_index$mean_var_index] <= 0.05)
 sum(obj1$p.adj.fdr[gene_index$EE_index] <= 0.10)/
   sum(obj1$p.adj.fdr <= 0.10)
 # Number of positive discoveries
-sum(obj1$p.adj.fdr[gene_index$mean_index] <= 0.10)
-sum(obj1$p.adj.fdr[gene_index$var_index] <= 0.10)
-sum(obj1$p.adj.fdr[gene_index$mean_var_index] <= 0.10)
-
-t <- proc.time()
-obj2 <- DiSC(ct.mat = rarefy_mat, cell.ind = meta_cell,
-             metadata = meta_ind, outcome = "phenotype",
-             covariates = "RIN", cell.id = "cell_id",
-             individual.id = "individual", perm.no = 99,
-             features = c('prev', 'nzm', 'nzsd'), verbose = FALSE)
-print(t - proc.time())
-obj1$p.adj.fdr[123]
-obj2$p.adj.fdr[123]
 sum(obj1$p.adj.fdr[gene_index$mean_index] <= 0.10)
 sum(obj1$p.adj.fdr[gene_index$var_index] <= 0.10)
 sum(obj1$p.adj.fdr[gene_index$mean_var_index] <= 0.10)

@@ -26,26 +26,16 @@ meta_cell <- sim_data$meta_cell
 gene_index <- sim_data$gene_index
 meta_ind <- sim_data$meta_ind
 
-read_depth = rowSums(count_matrix)
-discarding_flag = FALSE
-if(discarding_flag){
-  # when the sequencing depths of some samples are shallow
-  depth = min(5000, round(quantile(read_depth, probs = 0.1)))
-  cat("read depth filtering with threshold", depth, "\n")
-  count_matrix_temp <- count_matrix[, which(read_depth >= depth)]
-  meta_cell_temp <- meta_cell %>% 
-    filter(cell_id %in% colnames(count_matrix_temp))
-  rarefy_mat <- t(GUniFrac::Rarefy(t(count_matrix_temp))$otu.tab.rff)
-} else {
-  # when all samples are sufficiently sequenced
-  rarefy_mat <- t(GUniFrac::Rarefy(t(count_matrix))$otu.tab.rff)
-}
-
-obj1 <- DiSC(ct.mat = rarefy_mat, cell.ind = meta_cell,
+set.seed(seed = 123456)
+t <- proc.time()
+obj1 <- DiSC(data.mat = count_matrix, cell.ind = meta_cell,
              metadata = meta_ind, outcome = "phenotype",
              covariates = "RIN", cell.id = "cell_id",
              individual.id = "individual", perm.no = 999,
-             features = c('prev', 'nzm', 'nzsd'), verbose = TRUE)
+             features = c('prev', 'nzm', 'nzsd'), verbose = TRUE,
+             sequencing.data = TRUE)
+print("Computational time for DiSC:")
+print(proc.time() - t)
 # Type I error
 mean(obj1$p.raw[gene_index$EE_index] <= 0.05)
 # Power
