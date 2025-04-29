@@ -1,0 +1,99 @@
+---
+title: "DiSC: A statistical tool for differential expression analyis of individual level single-cell RNA-Seq data"
+author: "Lujun Zhang and Jun Chen"
+date: "2024-07-31"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{DiSC: A statistical tool for differential expression analyis of individual level single-cell RNA-Seq data}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+
+# 1. Setups and Introduction
+
+This vigenette will showcase how to use DiSC.
+
+## 1.1. Required Dataset
+
+- This dataset was generated in the "Generate Simulation Datasets" step in the ["Parametric_simulation.rmd"](https://github.com/Lujun995/DiSC_Replication_Code).
+- Coming from n12_12_d1.3_c375_vFALSE_0811_b1.RData
+- It contains 12 cases and 12 controls, each with 375 cell replicates.
+- The read depths of each cell replicate are well-balanced.
+- A covariate at the individual level called RIN (RNA Integrity Number) is included in the dataset. 
+- The dataset comprises a total of 8,000 genes.
+- **Signal density:** 15%, with differences in mean, variance, and mean+variance (each at 5%). The ground truth of differential/equally expression genes are indicated by `gene_index`, including:
+    +  `mean_index`: genes with a difference in mean
+    +  `var_index`: genes with a difference in variance
+    +  `mean_var_index`: genes with a difference in both mean and variance
+    +  `EE_index`: otherwise (to estimate type-I error)
+- Difference in mean and/or variance = 1.3 folder change
+
+
+```{r setup, warning = FALSE, message=FALSE}
+library(DiSC)
+```
+
+# 2. Data Input
+
+
+```{r input}
+data("sim_data", package = "DiSC")
+
+count_matrix <- sim_data$count_matrix
+meta_cell <- sim_data$meta_cell
+gene_index <- sim_data$gene_index
+meta_ind <- sim_data$meta_ind
+
+dim(count_matrix)
+dim(meta_cell)
+dim(meta_ind)
+count_matrix[1:3,1:6]
+head(meta_cell)
+head(meta_ind)
+```
+
+# 3. DiSC: A statistical tool for differential expression analyis of individual level single-cell RNA-seq data
+
+List of accepted parameters in function `DiSC`:
+
+-  `data.mat`: **count** matrix for single cell RNA sequencing data, or other single cell data matrices. Genes / variables are in rows, **column names are cell ids** and row names are gene / variable names.
+-  `cell.ind`: a data frame includes two columns of cell ids and individual ids. It links cell ids to individual ids.
+-  `metadata`: a data frame includes a column of individual id, a column of an outcome of interest and columns of covariates if applicable.
+-  `outcome`: a character string which is the variable name of outcome in `metadata`.
+-  `covariates`: a character string or vector of character strings which are the variable names of covariates in `metadata`. Default: `NULL`.
+-  `cell.id`: a character string which is the variable name of cell ids in `cell.ind`.
+-  `individual.id`: a character string which is the variable name of the individual id variables in `cell.ind` and `metadata`.
+-  `perm.no`: an integer, number of permutations used. Default: 999. Can be reduced to 99 if adjusted P-values (false discovery rate) is of the only interest.
+-  `features`: Vector of a character string. Choose from "prev" (zero/non-zero proportions), "nzm" (mean), "nzsd" (non-zero standard deviation), "sd" (overall standard deviation). Features used to test for the differentially expressed genes. Default: "prev", "nzm" and "nzsd".
+-  `verbose`: Logical. Should the function print the processes? Default: `TRUE`.
+-  `sequencing.data`: Logical. Is the data.mat a sequencing data matrix (e.g. scRNA sequencing data/count data)? Default: `TRUE`.
+
+```{r}
+set.seed(seed = 123456)
+t <- proc.time()
+obj1 <- DiSC(data.mat = count_matrix, cell.ind = meta_cell,
+             metadata = meta_ind, outcome = "phenotype",
+             covariates = "RIN", cell.id = "cell_id",
+             individual.id = "individual", perm.no = 999,
+             features = c('prev', 'nzm', 'nzsd'), verbose = TRUE,
+             sequencing.data = TRUE)
+print("Computational time for DiSC:")
+print(proc.time() - t)
+# Type I error
+mean(obj1$p.raw[gene_index$EE_index] <= 0.05)
+# Power
+mean(obj1$p.raw[gene_index$mean_index] <= 0.05)
+mean(obj1$p.raw[gene_index$var_index] <= 0.05)
+mean(obj1$p.raw[gene_index$mean_var_index] <= 0.05)
+# False discovery proportion
+sum(obj1$p.adj.fdr[gene_index$EE_index] <= 0.10)/
+  sum(obj1$p.adj.fdr <= 0.10)
+# Number of positive discoveries
+sum(obj1$p.adj.fdr[gene_index$mean_index] <= 0.10)
+sum(obj1$p.adj.fdr[gene_index$var_index] <= 0.10)
+sum(obj1$p.adj.fdr[gene_index$mean_var_index] <= 0.10)
+```
+
+
+
