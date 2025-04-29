@@ -1,7 +1,0 @@
-import(stats)
-import(Matrix)
-import(matrixStats)
-
-importFrom(utils, getFromNamespace)
-
-export(DiSC)

@@ -1,6 +1,0 @@
-bibentry(bibtype = "Book",
-         title = "Mixed-Effects Models in S and S-PLUS",
-         author = c(person(c("José", "C."), "Pinheiro"),
-                    person(c("Douglas", "M."), "Bates")),
-         year = "2000", publisher = "Springer", address = "New York",
-         doi = "10.1007/b98882")
