@@ -5,7 +5,7 @@
  
 ```R
 devtools::install_github("Lujun995/DiSC")
-library(DiSC)
+library(SingleCellStat)
 ```
 
 ## Vignette
@@ -19,7 +19,7 @@ vignette("DiSC")
 
 
 ```R
-data("sim_data", package = "DiSC")
+data("sim_data", package = "SingleCellStat")
 
 count_matrix <- sim_data$count_matrix
 meta_cell <- sim_data$meta_cell

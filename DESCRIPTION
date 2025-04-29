@@ -1,4 +1,4 @@
-Package: DiSC
+Package: SingleCellStat
 Type: Package
 Title: A Statistical Tool for Differential Expression Analyis of
         Individual Level Single-cell RNA-Seq data
